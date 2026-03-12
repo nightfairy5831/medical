@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User profile (synced with Supabase Auth)
+model User {
+  id            String        @id @default(uuid())
+  email         String        @unique
+  name          String?
+  avatarUrl     String?
+  role          String        @default("user")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  subscription  Subscription?
+
+  @@map("users")
+}
+
+// Stripe subscription management
+model Subscription {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  stripeCustomerId  String?   @unique
+  stripePriceId     String?
+  stripeSubId       String?   @unique
+  plan              String    @default("trial")
+  status            String    @default("trialing")
+  trialEndsAt       DateTime?
+  currentPeriodEnd  DateTime?
+  canceledAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
